@@ -13,21 +13,21 @@ fun xcb_aux_find_visual_by_attrs(x0 : Pointer(xcb_screen_t), x1 : Int8, x2 : Int
 fun xcb_aux_sync(Pointer(xcb_connection_t)) : Void
 
 struct xcb_params_cw_t
-    back_pixmap : UInt32
-    back_pixel : UInt32
-    border_pixmap : UInt32
-    border_pixel : UInt32
-    bit_gravity : UInt32
-    win_gravity : UInt32
-    backing_store : UInt32
-    backing_planes : UInt32
-    backing_pixel : UInt32
-    override_redirect : UInt32
-    save_under : UInt32
-    event_mask : UInt32
-    dont_propagate : UInt32
-    colormap : UInt32
-    cursor : UInt32
+	back_pixmap : UInt32
+	back_pixel : UInt32
+	border_pixmap : UInt32
+	border_pixel : UInt32
+	bit_gravity : UInt32
+	win_gravity : UInt32
+	backing_store : UInt32
+	backing_planes : UInt32
+	backing_pixel : UInt32
+	override_redirect : UInt32
+	save_under : UInt32
+	event_mask : UInt32
+	dont_propagate : UInt32
+	colormap : UInt32
+	cursor : UInt32
 end
 
 fun xcb_aux_create_window (x0 : Pointer(xcb_connection_t), x1 : UInt8, x2 : xcb_window_t, x3 : xcb_window_t, x4 : Int16, x5 : Int16, x6 : UInt16, x7 : UInt16, x8 : UInt16, x9 : UInt16, x10 : xcb_visualid_t, x11 : UInt32, x12 : Pointer(xcb_params_cw_t)) : xcb_void_cookie_t
