@@ -26,7 +26,7 @@ struct _xcb_out
 	writing : Int32 
 
 	socket_cond : pthread_cond_t 
-	(*return_socket)(Void *closure): Void 
+	close : (Pointer(Void) -> Pointer(return_socket)
 	socket_closure : Pointer(Void)
 	socket_moving : Int32
 
