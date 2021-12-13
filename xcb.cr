@@ -1,3 +1,4 @@
+@[Link("XCB")
 lib LibXCB
 	X_PROTOCOL 11
 
@@ -141,5 +142,5 @@ lib LibXCB
 
 	fun xcb_connect_to_display_with_auth_info(x0 : Pointer(Char*), Pointer(xcb_auth_info_t), Pointer(Int32)) : Pointer(xcb_connection_t)
 
-	UInt32 xcb_generate_id(Pointer(xcb_connection_t)) :
-	end
+	fun xcb_generate_id(Pointer(xcb_connection_t)) : UInt32 
+end

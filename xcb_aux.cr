@@ -1,3 +1,4 @@
+@[Link("XCB")
 lib LibXCB
 	fun xcb_aux_get_depth(x0 : xcb_connection_t*, x1 : Pointer(xcb_screen_t)) : UInt8
 
@@ -81,7 +82,6 @@ lib LibXCB
 	fun xcb_aux_create_gc_checked(x0 : Pointer(xcb_connection_t), x1 : xcb_gcontext_t, x2 : xcb_drawable_t, x3 : UInt32, x4 : Pointer(xcb_params_gc_t)) : xcb_void_cookie_t
 
 	fun xcb_aux_change_gc(x0 : Pointer(xcb_connection_t), x1 : xcb_gcontext_t, x2 : UInt32, x3 : Pointer(xcb_params_gc_t)) : xcb_void_cookie_t
-
 
 	fun xcb_aux_change_gc_checked(x0 : Pointer(xcb_connection_t), x1 : xcb_gcontext_t, x2 : UInt32, x3 : Pointer(xcb_params_gc_t)) : xcb_void_cookie_t
 

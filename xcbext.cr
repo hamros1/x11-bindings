@@ -1,3 +1,4 @@
+@[Link("XCB")
 lib LibXCB
 	struct xcb_extension_t
 		name : Char*

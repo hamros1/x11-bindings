@@ -1,3 +1,4 @@
+@[Link("XCB")
 lib LibXCB
 	struct xcb_get_text_property_reply_t
 		_reply : Pointer(xcb_get_property_reply_t)
@@ -8,7 +9,6 @@ lib LibXCB
 	end
 
 	fun xcb_get_text_property(x0 : Pointer(xcb_connection_t), x1 : xcb_window_t, x2 : xcb_atom_t): xcb_get_property_cookie_t 
-
 	fun xcb_get_text_property_unchecked(Pointer(xcb_connection_t), xcb_window_t, xcb_atom_t) : xcb_get_property_cookie_t 
 
 	fun xcb_get_text_property_reply(x0 : Pointer(xcb_connection_t), x1 : xcb_get_property_cookie_t, x3 : Pointer(xcb_get_text_property_reply_t), x4 : Pointer(Pointer(xcb_generic_error_t))) : UInt8 
@@ -64,7 +64,6 @@ lib LibXCB
 	fun xcb_get_wm_class_from_reply(x0 : Pointer(xcb_get_wm_class_reply_t, x1 : Pointer(xcb_get_property_reply_t))) : UInt8 
 
 	fun xcb_get_wm_class_reply(x0 : xcb_connection_t, x1 : xcb_get_property_cookie_t, Pointer(xcb_get_wm_class_reply_t), Pointer(Pointer(xcb_generic_error_t))) : UInt8 
-
 
 	fun xcb_get_wm_class_reply_wipe(Pointer(xcb_get_wm_class_reply_t)) : Void 
 
@@ -214,10 +213,9 @@ lib LibXCB
 	end
 
 	fun xcb_get_wm_protocols(x0 : Pointer(xcb_connection_t), x1 : xcb_window_t, x2 : xcb_atom_t) : xcb_get_property_cookie_t 
-
 	fun xcb_get_wm_protocols_unchecked(x0 : Pointer(xcb_connection_t), x1 : xcb_window_t, x2 : xcb_atom_t) : xcb_get_property_cookie_t 
 
 	fun xcb_get_wm_protocols_reply(Pointer(xcb_connection_t), xcb_get_property_cookie_t, Pointer(xcb_get_wm_protocols_reply_t), Pointer(Pointer(xcb_generic_error_t))) : UInt8 
 
 	fun xcb_get_wm_protocols_reply_wipe(Pointer(xcb_get_wm_protocols_reply_t)) : Void 
-	end
+end

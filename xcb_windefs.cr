@@ -1,3 +1,4 @@
+@[Link("XCB")
 lib LibXCB
 	WINVER = 0x0501
 
