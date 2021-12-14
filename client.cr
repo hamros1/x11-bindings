@@ -2,6 +2,212 @@ alias PChar = Pointer Char
 alias PMonitor = Pointer Monitor
 alias PClient = Pointer Client
 
+def getatom
+	atom_cookie = xcb_intern_atom(conn, 0, atom_name.size, atom_name)
+	rep = xcb_intern_atom_reply(conn, atom_cookie, nil)
+	if !rep
+		return
+	end
+	atom = rep.atom
+	free rep
+	return atom
+end
+
+def handle_keypress(e)
+	ev = e
+	keysym = xcb_get_keysym(ev.detail)
+
+	keys.each do |key|
+		if keysym == key.keysym && CLEANMASK(keys[i].mod) == CLEANMASK(ev.state && key.func)
+			key.func(key.arg)
+			break
+		end
+	end
+end
+
+def configwin(win, mask, wc)
+	values = StaticArray(UInt32, 7)
+	i = -1
+
+	if mask & XCB_CONFIG_WINDOW_X
+		mask |= XCB_CONFIG_WINDOW_X
+		i++
+		values[i] = wc.x
+	end
+
+	if mask & XCB_CONFIG_WINDOW_Y
+		mask |= XCB_CONFIG_WINDOW_Y
+		i++
+		values[i] = wc.y
+	end
+
+	if mask & XCB_CONFIG_WINDOW_WIDTH
+		mask |= XCB_CONFIG_WINDOW_WIDTH
+		i++
+		values[i] = wc.width
+	end
+
+	if mask & XCB_CONFIG_WINDOW_HEIGHT
+		mask |= XCB_CONFIG_WINDOW_HEIGHT
+		i++
+		values[i] = wc.height
+	end
+
+	if mask & XCB_CONFIG_WINDOW_SIBLING
+		mask |= XCB_CONFIG_WINDOW_SIBLING
+		i++
+		values[i] = wc.sibling
+	end
+
+	if mask & XCB_CONFIG_WINDOW_STACK_MODE
+		mask |= XCB_CONFIG_WINDOW_STACK_MODE
+		i++
+		values[i] = wc.stackmode
+	end
+
+	if i == -1
+		return
+	end
+
+	xcb_configure_window(conn, win, mask, values)
+	xcb_flush(conn)
+end
+
+def configurerequest(ev)
+	e = ev
+	values = StaticArray(UInt32, 1)
+	if client = findclient(e.window)
+		getmonsize(1, pointerof(mon_x), pointerof(mon_y), pointerof(mon_width), pointerof(mon_height, client)
+		if e.value_mask & XCB_CONFIG_WINDOW_WIDTH
+			if !client.maxed && !client.hormaxed
+				client.width = e.width
+			end
+		end
+		if e.value_mask & XCB_CONFIG_WINDOW_HEIGHT
+			if !client.maxed && !client.vertmaxed
+				client.height = e.height
+			end
+		end
+		if e.value_mask & XCB_CONFIG_WINDOW_X
+			if !client.maxed && !client.hormaxed
+				client.x = e.x
+			end
+		end
+		if e.value_mask & XCB_CONFIG_WINDOW_Y
+			if !client.maxed && client.vertmaxed
+				client.y = e.y 
+			end
+		end
+		if e.value_mask & XCB_CONFIG_WINDOW_SIBLING
+			values[0] = e.sibling
+			xcb_configure_window(conn, e.window, XCB_CONFIG_WINDOW_SIBLING, values)
+		end
+		if e.value_mask & XCB_CONFIG_WINDOW_STACK_MODE
+			values[0] = e.stack_mode
+			xcb_configure_window(conn, e.window, XCB_CONFIG_WINDOW_STACK_MODE, values)
+		end
+		setborders(client, true)
+	else
+		wc.x = e.x
+		wc.y = e.y
+		wc.width = e.width
+		wc.height = e.height
+		wc.sibling = e.sibling
+		wc.stackmode = e.stack_mode
+		configwin(e.window, e.value_mask, pointerof(wc))
+	end
+end
+
+def grabbuttons(c)
+	modifiers = [0, XCB_MOD_MASK_LOCK, numlockmask, numlockmask | XCB_MOD_MASK_LOCK]
+	buttons.each do |i|
+		modifiers.each do |j|
+			xcb_grab_button(conn, 1, c.id, XCB_EVENT_MASK_BUTTON_PRESS,
+																		 XCB_GRAB_MODE_ASYNC,
+																		 XCB_GRAB_MODE_ASYNC,
+																		 screen.root, XCB_NONE,
+																		 button.button,
+																		 button.mask|modifiers[j])
+		end
+	end
+	modifiers.each do |modifier|
+		xcb_ungrab_button(conn, XCB_BUTTON_INDEX_1, c.id, modifier)
+	end
+end
+
+def buttonpress(ev)
+	e = ev
+	buttons.each do |i|
+		if button.func && button.button == e.detail && CLEANMASK(buttons.mask) == CLEANMASK(e.state)
+			if !focuswin && button.func == mousemotion
+				return 
+			end
+			if button.root_only
+				if e.event == e.root && e.child == 0
+					buttton.func(pointerof(button.arg))
+				else
+					button.func(pointerof(button.arg))
+				end
+			end
+		end
+	end
+end
+
+def clientmessage(ev)
+	e = ev
+	if (e.type == ATOM[wm_change_state] && e.format == 32 && e.data.data32[0] == XCB_ICCCM_WM_STATE_ICONIC) || e.type == ewmh._NET_ACTIVE_WINDOW
+		cl = findclient(e.window)
+		if !cl
+			return
+		end
+		if !cl.iconic
+			if e.type == ewmh._NET_ACTIVE_WINDOW
+				setfocus(cl)
+				raisewindow(cl.id)
+			else
+				hide
+			end
+			return 
+		end
+		cl.iconic = false
+		xcb_map_window(conn, cl.id)
+		setfocus(cl)
+	else if e.type == ewmh._NET_CURRENT_DESKTOP
+	else if e.type == ewmh._NET_WM_STATE && e.format == 32
+		cl = findclient(pointerof(e.window))
+		if !cl
+			return
+		end
+		if !cl.iconic
+			if e.type == ewmh._NET_ACTIVE_WINDOW
+				setfocus cl
+				raisewindow cl.id
+			else
+				hide
+			end
+		end
+		if e.data.data32[1] == ewmh._NET_WM_STATE_FULLSCREEN
+			case e.data.data32[0]
+			when XCB_EWMH_WM_STATE_REMOVE
+				unmaxwin cl
+			when XCB_EWMH_STATE_ADD
+				maxwin cl
+			when XCB_EWMH_STATE_TOGGLE
+				cl.maxed ? unmaxwin cl : maxwin cl
+			end
+		end
+	else if e.type == ewmh._NET_WM_DESKTOP && e.format == 32
+		cl = findclient(e.window)
+		if !cl
+			return
+		end
+		delfromworkspace(cl)
+		addtoworkspace(cl, e.data.data32[0])
+		xcb_unmap_window(conn, cl.id)
+		xcb_flush(conn)
+	end
+end
+
 def setupscreen
 	reply = xcb_query_tree_reply(conn, xcb_query_tree(con, screen.root), 0)
 	if !reply
@@ -78,13 +284,6 @@ def centerpointer(win, cl)
 	end
 
 	xcb_warp_pointer(conn, XCB_NONE, win, 0, 0, 0, 0, cur_x, cur_y)
-end
-
-def arrangewindows
-	winlist.each do |win|
-		client = win.data
-		fitonscreen(client)
-	end
 end
 
 macro get_property(atom, len)
@@ -739,7 +938,7 @@ def apply_layout(m, d, n, rect, root_rect)
 						fence = n.first_child.constraints.min_height
 						n.split fence / rect.height
 					else if fence > rect.height - n.second_child.constraints.min_height
-						fence = rect.height - n.second_child.constraints.min_hegith
+						fence = rect.height - n.second_child.constraints.min_height
 						n.split_ratio = fence / rect.height
 					end
 				end
@@ -748,6 +947,7 @@ def apply_layout(m, d, n, rect, root_rect)
 			end
 		end
 	end
+
 	apply_layout(m, d, n.first_child, first_rect, root_rect)
 	apply_layout(m, d, n.second_child, second_rect, root_rect)
 end
@@ -756,8 +956,10 @@ def stack(w1, x2, mode)
 	if w2 == XCB_NONE
 		return
 	end
+
 	mask = XCB_CONFIG_WINDOW_SIBLING | XCB_CONFIG_WINDOW_STACK_MODE
 	values = [w2, mode]
+
 	LibXCB.xcb_configure_window(dpy, w1, mask, values)
 end
 
@@ -838,8 +1040,10 @@ def remove_monitor(m)
 	while m.desk_head
 		remove_desktop(m, m.desk_head)
 	end
+
 	last_mon = mon
 	unlink_monitor m
+
 	LibXCB.xcb_destroy_window(dpy, m.root)
 	free m
 end
@@ -847,7 +1051,9 @@ end
 def mon_from_client(c)
 	xc = c.floating_rectangle.x = c.floating_rectangle.width / 2
 	yc = c.floating_rectangle.y + c.floating_rectangle.height / 2
+
 	pt = xcb_point_t(xc, yc)
+
 	nearest = monitor_from_point(pt)
 	if !nearest
 		dmin = Int32::MAX
@@ -868,6 +1074,7 @@ def nearest_monitor(m, dir, sel)
 	dmin = UInt32::MAX
 	nearest = nil
 	rect = m.rectangle
+
 	f = mon_head
 	while f
 		if f == m || !monitor_matches(loc, loc, sel) || !on_dir_side(rect, r, dir)
