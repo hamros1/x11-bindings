@@ -1,3 +1,140 @@
+bh, blw = 0
+numlockmask = 0
+cursor = StaticArray(xcb_cursor_t, CurLast)
+
+mons, selmon = Pointer(Monitor).null
+root = uninitialized xcb_window_t
+xscreen = Pointer(xcb_screen_t).null
+syms = Pointer(xcb_key_symbols_t).null
+err = Pointer(xcb_generic_error_t).null
+conn = Pointer(xcb_connection_t).null
+
+NetSupported = uninitialized xcb_atom_t
+NetWMName = uninitialized xcb_atom_t
+NetWMState = uninitialized xcb_atom_t
+NetWMFullscreen = uninitialized xcb_atom_t
+
+WMProtocols = uninitialized xcb_atom_t
+WMDelete = uninitialized xcb_atom_t
+WMState = uninitialized xcb_atom_t
+
+def arrange(m)
+	if m
+		client_show_hide(m.stack)
+		client_focus(nil)
+		arrangemon(m)
+	else
+		m = mons
+		while m
+			client_show_hide(m.stack)
+			m = m.next
+		end
+
+		client_focus(nil)
+
+		m = mons
+		while m
+			arrangemon(m)
+			m = m.next
+		end
+	end 
+end
+
+def arrangemon(m)
+	m.ltsymbol = m.lt[m.sellt].symbol
+
+	if m.lt[m.sellt].arrange
+		m.lt[m.sellt].arrange(m)
+	end
+
+	restack(m)
+end
+
+def checkotherwm
+	wm_cookie = xcb_change_window_attributes_checked(conn, root, XCB_EVENT_MASK, XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT.as(Array(UInt32)))
+	if err = xcb_reqest_check(conn, wm_cookie)
+		free(err)
+	end
+end
+
+def cleanup
+	a = Arg(ui: 0)
+	foo = Layout("", nil)
+	
+	view(pointerof(a))
+	selmon.lt[selmon.sell] = pointerof(foo)
+	m = mons 
+	while m
+		while m.stack
+			client_unmanage(m.stack, false)
+		end
+		m = m.next
+	end
+	xcb_close_font(conn, dc.font.xfont)
+	xcb_ungrab_key(conn, cursor[CurNormal])
+	xcb_free_cursor(conn, cursor[CurResize])
+	xcb_free_cursor(conn, cursor[CurMove])
+	xcb_free_colors(conn, xscreen.default_colormap, 0, ColLast, dc.norm)
+	xcb_free_colors(conn, xscreen.default_colormap, 0, ColLast, dc.last)
+
+	while mons
+		cleanupmon(mons)
+	end
+
+	xcb_set_input_focus(conn, XCB_INPUT_FOCUS_POINTER_ROOT, XCB_INPUT_FOCUS_POINTER_ROOT, XCB_CURRENT_TIME)
+	xcb_flush(conn)
+end
+
+def cleanupmon
+	if mon = mons
+		mons = mons.next
+	else
+		m = mons 
+		while m && m.next != mon
+			m = m.next
+		end
+		m.next = mon.next
+	end 
+
+	xcb_unmap_window(conn, mon.barwin)
+	xcb_destroy_window(conn, mon.barwin)
+	free(mon)
+end
+
+def createmon
+	m = Pointer.malloc(sizeof(Monitor))
+	m.tagset[0] = m.tagset[1]
+	m.fact = mfact
+	m.showbar = showbar
+	m.topbar = topbar
+	m.lt[0] = pointerof layouts[0]
+	m.lt[1] = pointerof layouts[1]
+	m.ltsymbol = layouts[0].symbol
+	return m
+end
+
+def dirtomon(dir)
+	if dir > 0
+		if !m = selmon.next
+			m = mons
+		end
+	else
+		if selmon == mons
+			m = mons
+			while m
+				m = m.next
+			end
+		else
+			m = mons
+			while m.next != selmon
+				m = m.next
+			end
+		end
+	end
+
+	return m
+end
+
 def getcolor(colstr)
 	cmap = xscreen.default_colormap
 	colcopy = cmap.dup
