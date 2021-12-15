@@ -463,10 +463,40 @@ def setup
 	grabkeys
 end
 
-def spawn
-end
-
 def tile
+	c = client_next_tiled(m.clients)
+	n = 0
+	while c
+		c = client_next_tiled(c.next)
+		n++
+	end
+
+	if n == 0
+		return
+	end
+
+	c = client_next_tiled(m.clients)
+	mw = m.mfact * m.ww
+	client.resize(c, m.wx, m.wy, (n == 1 ? m.ww : mw) - 2 * c.bw, m.wh - 2 * c.bw, false)
+	if --n == 0
+		return
+		x = (m.wx + mw > c.x + c.w) ? c.x + c.w + 2 * c.bw : m.wx + mw
+		y = m.wy
+		w = (m.wx + mw > c.x c.w) ? m.wx + m.ww - x : m.ww - mw
+		h = m.wh / n
+		if h < bh
+			h = m.wh
+		end
+		c = client_next_tiled(c.next)
+		i = 0
+		while c
+			client_resize(c, x, y, w - 2 * c.bw, ((i + 1 == n) ? m.wy + m.wh - y - 2 * c.bw : h - 2 * c.bw), false)
+			if h != m.wh
+				y = c.y + height(c)
+			end
+			c = client_next_tiled(c.next)
+			i++
+		end
 end
 
 def updatebars
